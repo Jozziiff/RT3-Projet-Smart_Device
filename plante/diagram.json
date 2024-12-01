@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "author": "viraj prithu",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -115.2, "left": 72.04, "attrs": {} },
+    { "type": "wokwi-dht22", "id": "dht1", "top": -162.9, "left": -120.6, "attrs": {} },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr1",
+      "top": 3.2,
+      "left": -200.8,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-slide-potentiometer",
+      "id": "pot1",
+      "top": 120.2,
+      "left": -183.4,
+      "attrs": { "travelLength": "30" }
+    },
+    { "type": "wokwi-servo", "id": "servo1", "top": -174.8, "left": 278.4, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "dht1:VCC", "esp:3V3", "red", [ "h0", "v-50" ] ],
+    [ "dht1:GND", "esp:GND", "black", [ "h0", "v50" ] ],
+    [ "dht1:SDA", "esp:23", "green", [ "h0", "v-30" ] ],
+    [ "ldr1:AO", "esp:VP", "blue", [ "h50", "v-30" ] ],
+    [ "ldr1:GND", "esp:GND", "black", [ "h-10", "v50" ] ],
+    [ "ldr1:VCC", "esp:3V3", "red", [ "h10", "v-50" ] ],
+    [ "ldr1:GND", "pot1:GND", "black", [ "h0" ] ],
+    [ "pot1:VCC", "ldr1:VCC", "red", [ "h-19.2", "v-86.4", "h192", "v-57.6" ] ],
+    [ "pot1:SIG", "esp:VN", "green", [ "h-38.4", "v56.8", "h278.4", "v-297.6" ] ],
+    [ "servo1:GND", "esp:GND.2", "black", [ "h0" ] ],
+    [ "servo1:V+", "esp:VN", "green", [ "h-249.6", "v0.1" ] ],
+    [ "servo1:PWM", "esp:21", "green", [ "h-57.6", "v77" ] ]
+  ],
+  "dependencies": {}
+}

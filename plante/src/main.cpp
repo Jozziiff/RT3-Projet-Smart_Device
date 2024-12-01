@@ -1,0 +1,169 @@
+#include <Arduino.h>
+#include <ArduinoJson.h>
+#include "config.h"
+#include "WiFiManager.h"
+#include "MQTTManager.h"
+#include "SensorManager.h"
+#include "PlantController.h"
+#include <ESP32Servo.h>
+#include "DHTesp.h"
+
+// Sensor Objects and Servo
+DHTesp dhtSensor;
+Servo myservo;
+
+// MQTT client
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
+// Threshold Variables
+int soilMoistureThreshold = 30;  // Default minimum soil moisture percentage
+float tempLowThreshold = 15.0;   // Default minimum temperature in °C
+float tempHighThreshold = 35.0;  // Default maximum temperature in °C
+float humidityLowThreshold = 30.0;  // Default minimum humidity percentage
+float humidityHighThreshold = 70.0; // Default maximum humidity percentage
+int lightLowThreshold = 20;    // Default minimum light level percentage
+int lightHighThreshold = 80;   // Default maximum light level percentage
+
+// Timer Variables
+uint32_t lastSensorReadTime = 0;
+const uint32_t sensorReadInterval = 3000;
+
+
+// MQTT Callback function
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+  // Handle incoming MQTT messages
+  if (strcmp(topic, topicThresholds) == 0) {
+    // Convert payload to string
+    String payloadStr = String((char*)payload);
+    
+    // Print received payload for debugging
+    Serial.println("Received payload: ");
+    Serial.println(payloadStr);
+
+    // Create a JsonDocument to hold the parsed data
+    JsonDocument doc;  // Use JsonDocument instead of DynamicJsonDocument or StaticJsonDocument
+    
+    // Deserialize the JSON payload
+    DeserializationError error = deserializeJson(doc, payloadStr);
+    
+    if (error) {
+      // Handle JSON deserialization error
+      Serial.print("Failed to parse JSON: ");
+      Serial.println(error.f_str());
+      return;
+    }
+
+    // Extract values from the JSON document, using null if not present
+    soilMoistureThreshold = doc["soil_moisture"] != nullptr ? doc["soil_moisture"].as<int>() : soilMoistureThreshold;
+    tempLowThreshold = doc["temp_low"] != nullptr ? doc["temp_low"].as<float>() : tempLowThreshold;
+    tempHighThreshold = doc["temp_high"] != nullptr ? doc["temp_high"].as<float>() : tempHighThreshold;
+    humidityLowThreshold = doc["humidity_low"] != nullptr ? doc["humidity_low"].as<float>() : humidityLowThreshold;
+    humidityHighThreshold = doc["humidity_high"] != nullptr ? doc["humidity_high"].as<float>() : humidityHighThreshold;
+    lightLowThreshold = doc["light_low"] != nullptr ? doc["light_low"].as<int>() : lightLowThreshold;
+    lightHighThreshold = doc["light_high"] != nullptr ? doc["light_high"].as<int>() : lightHighThreshold;
+  }
+}
+
+
+// Function to check environment and send warnings
+void checkEnvironment(float temperature, float humidity, int lightLevel) {
+  String warning = "";  // JSON format for warnings, empty by default
+  bool hasWarning = false;
+  
+  String tempWarn = "";
+  String humidityWarn = "";
+  String soilWarn = "";
+  String lightWarn = "";
+
+  // Check temperature
+  if (temperature < tempLowThreshold) {
+    tempWarn = "Low temperature for the plant";
+    hasWarning = true;
+  } else if (temperature > tempHighThreshold) {
+    tempWarn = "High temperature for the plant";
+    hasWarning = true;
+  }
+
+  // Check humidity
+  if (humidity < humidityLowThreshold) {
+    humidityWarn = "Low humidity for the plant";
+    hasWarning = true;
+  } else if (humidity > humidityHighThreshold) {
+    humidityWarn = "High humidity for the plant";
+    hasWarning = true;
+  }
+
+  // Check light level
+  if (lightLevel < lightLowThreshold) {
+    lightWarn = "Weak Light for the plant";
+    hasWarning = true;
+  } else if (lightLevel > lightHighThreshold) {
+    lightWarn = "Strong Light for the plant";
+    hasWarning = true;
+  }
+
+  warning = "{\"temperature\": \"" + tempWarn + "\" , \"humidity\": \"" + humidityWarn +  "\", \"lightLevel\": \"" + lightWarn + "\"}";
+  publishData(mqttClient, topicWarnings, warning.c_str());
+}
+
+void printThresholds() {
+  Serial.println("Current Thresholds:");
+  Serial.print("Soil Moisture Threshold: ");
+  Serial.println(soilMoistureThreshold);
+  Serial.print("Temperature Low Threshold: ");
+  Serial.println(tempLowThreshold);
+  Serial.print("Temperature High Threshold: ");
+  Serial.println(tempHighThreshold);
+  Serial.print("Humidity Low Threshold: ");
+  Serial.println(humidityLowThreshold);
+  Serial.print("Humidity High Threshold: ");
+  Serial.println(humidityHighThreshold);
+  Serial.print("Light Low Threshold: ");
+  Serial.println(lightLowThreshold);
+  Serial.print("Light High Threshold: ");
+  Serial.println(lightHighThreshold);
+}
+
+void setup() {
+    Serial.begin(115200);
+    connectToWiFi(WIFI_SSID, WIFI_PASSWORD);
+    setupMQTT(mqttClient, MQTT_SERVER, MQTT_PORT, MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD, mqttCallback);
+
+    initSensors(dhtSensor, DHT_PIN);
+    initServo(myservo, SERVO_PIN);
+    subscribeToTopic(mqttClient, topicThresholds);  // Ensure this subscribes to the topic for threshold updates
+
+    // Print the initial threshold values
+    printThresholds();
+}
+
+void loop() {
+    if (millis() - lastSensorReadTime > sensorReadInterval) {
+        float temperature, humidity;
+        int soilMoisture, lightLevel;
+        readSensors(dhtSensor, SOIL_SENSOR_PIN, LDR_SENSOR_PIN, temperature, humidity, soilMoisture, lightLevel);
+
+        // Publish sensor data
+        String sensorData = "{\"temperature\":" + String(temperature) + ",\"humidity\":" + 
+                            String(humidity) + ",\"soilMoisture\":" + 
+                            String(soilMoisture) + ",\"lightLevel\":" + String(lightLevel) + "}";
+        publishData(mqttClient, topicPublish, sensorData.c_str());
+
+        checkEnvironment(temperature, humidity, lightLevel);
+        // Water plant if necessary
+        controlWatering(myservo, soilMoisture, soilMoistureThreshold);
+
+        // Print the threshold values periodically in the loop
+        printThresholds();
+
+        lastSensorReadTime = millis();
+    }
+
+    maintainConnection(mqttClient, MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD);
+
+    
+
+    // Ensure MQTT client processes incoming messages
+    mqttClient.loop();  // Important to call this periodically for subscription handling
+}

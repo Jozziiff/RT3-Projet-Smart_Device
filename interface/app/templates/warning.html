@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latest Warning</title>
+</head>
+<body>
+    <h1>Latest Warning</h1>
+    <div id="warning-message">
+        <!-- The warning message will appear here -->
+    </div>
+    <script>
+        fetch('/get-warning')
+            .then(response => response.json())
+            .then(data => {
+                const warningMessage = document.getElementById('warning-message');
+                if (data.status === "no warnings") {
+                    warningMessage.innerHTML = "No warnings currently.";
+                } else {
+                    warningMessage.innerHTML = JSON.stringify(data, null, 2);
+                }
+            });
+    </script>
+</body>
+</html>
