@@ -6,7 +6,7 @@ void initSensors(DHTesp& dhtSensor, int dhtPin) {
 }
 
 void readSensors(DHTesp& dhtSensor, int soilSensorPin, int ldrSensorPin, 
-                 float& temperature, float& humidity, int& soilMoisture, int& lightLevel) {
+                 float& temperature, float& humidity, int& soilMoisture, float& lightLevel) {
     TempAndHumidity data = dhtSensor.getTempAndHumidity();
     temperature = data.temperature;
     humidity = data.humidity;
@@ -14,6 +14,9 @@ void readSensors(DHTesp& dhtSensor, int soilSensorPin, int ldrSensorPin,
     int soilRaw = analogRead(soilSensorPin);
     soilMoisture = map(soilRaw, 0, 4095, 100, 0);
 
-    int ldrRaw = analogRead(ldrSensorPin);
-    lightLevel = map(ldrRaw, 0, 4095, 100, 0);
+   float ldrRaw = analogRead(ldrSensorPin);  // Read the raw LDR value
+
+    // Map raw ADC values (0-4095) to a float range (0.0 to 100000.0 lux)
+    lightLevel = (ldrRaw / 4095.0) * 100000.0;  // Convert to lux as a float
+
 }

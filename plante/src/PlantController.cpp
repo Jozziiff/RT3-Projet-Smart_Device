@@ -23,9 +23,6 @@ String controlWatering(Servo& servo, int soilMoisture, int soilMoistureThreshold
         
         // Return the time as a String
         return String(timeStr);
-    } else {
-        Serial.println("Soil moisture sufficient.");
-        servo.write(0); // Close valve
     }
     return ""; // Return an empty string if no watering occurred
 }

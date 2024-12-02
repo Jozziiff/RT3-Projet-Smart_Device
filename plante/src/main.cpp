@@ -70,7 +70,6 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 // Function to check environment and send warnings
 void checkEnvironment(float temperature, float humidity, int lightLevel, int moisture, String waterTime) {
   String warning = "";  // JSON format for warnings, empty by default
-  bool hasWarning = false;
   
   String tempWarn = "";
   String humidityWarn = "";
@@ -80,41 +79,31 @@ void checkEnvironment(float temperature, float humidity, int lightLevel, int moi
   // Check temperature
   if (temperature < tempLowThreshold) {
     tempWarn = "Low temperature for the plant";
-    hasWarning = true;
   } else if (temperature > tempHighThreshold) {
     tempWarn = "High temperature for the plant";
-    hasWarning = true;
   }
 
   // Check humidity
   if (humidity < humidityLowThreshold) {
     humidityWarn = "Low humidity for the plant";
-    hasWarning = true;
   } else if (humidity > humidityHighThreshold) {
     humidityWarn = "High humidity for the plant";
-    hasWarning = true;
   }
 
   // Check light level
   if (lightLevel < lightLowThreshold) {
     lightWarn = "Weak Light for the plant";
-    hasWarning = true;
   } else if (lightLevel > lightHighThreshold) {
     lightWarn = "Strong Light for the plant";
-    hasWarning = true;
   }
 
   if (moisture < soilMoistureThresholdMin) {
     soilWarn = "Soil not moisture enough, watering the plant...";
-    hasWarning = true;
   } else if (moisture > soilMoistureThresholdMax) {
     soilWarn = "Soil too moist!";
-    hasWarning = true;
   }
-  if (hasWarning) {
-    warning = "{\"temperature\": \"" + tempWarn + "\" , \"humidity\": \"" + humidityWarn +  "\", \"lightLevel\": \"" + lightWarn + "\", \"moisture\": \"" + soilWarn + "\", \"lastWatered\": \"" + waterTime + "\"}";
-    publishData(mqttClient, topicWarnings, warning.c_str());
-  }
+  warning = "{\"temperature\": \"" + tempWarn + "\" , \"humidity\": \"" + humidityWarn +  "\", \"lightLevel\": \"" + lightWarn + "\", \"moisture\": \"" + soilWarn + "\", \"lastWatered\": \"" + waterTime + "\"}";
+  publishData(mqttClient, topicWarnings, warning.c_str());
 }
 
 
@@ -138,7 +127,8 @@ void setup() {
 void loop() {
     if (millis() - lastSensorReadTime > sensorReadInterval) {
         float temperature, humidity;
-        int soilMoisture, lightLevel;
+        int soilMoisture;
+        float lightLevel;
         readSensors(dhtSensor, SOIL_SENSOR_PIN, LDR_SENSOR_PIN, temperature, humidity, soilMoisture, lightLevel);
 
         // Publish sensor data

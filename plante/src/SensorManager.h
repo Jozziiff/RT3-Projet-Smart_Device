@@ -5,6 +5,6 @@
 
 void initSensors(DHTesp& dhtSensor, int dhtPin);
 void readSensors(DHTesp& dhtSensor, int soilSensorPin, int ldrSensorPin, 
-                 float& temperature, float& humidity, int& soilMoisture, int& lightLevel);
+                 float& temperature, float& humidity, int& soilMoisture, float& lightLevel);
 
 #endif // SENSOR_MANAGER_H

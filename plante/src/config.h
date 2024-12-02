@@ -22,6 +22,5 @@ const int SERVO_PIN = 21;
 const char* topicPublish = "plantMonitor/sensors/data"; // Sensor data topic
 const char* topicWarnings = "plantMonitor/warnings";    // Warnings topic
 const char* topicThresholds = "plantMonitor/thresholds"; // Threshold values topic
-const char* topicLastWatered = "plantMonitor/lastWatered";
 
 #endif
