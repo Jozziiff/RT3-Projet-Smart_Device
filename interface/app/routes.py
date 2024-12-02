@@ -6,7 +6,7 @@ bp = Blueprint('routes', __name__)
 # Index route (Homepage)
 @bp.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', warning=latest_warning, thresholds=current_thresholds, status=latest_data)
 
 # Get sensor data as JSON
 @bp.route('/sensor-data', methods=['GET'])
@@ -19,7 +19,7 @@ def get_thresholds():
     return jsonify(current_thresholds)
 
 # Update thresholds from form
-@bp.route('/update-thresholds', methods=['GET', 'POST'])
+@bp.route('/update-thresholds', methods=['POST'])
 def update_thresholds():
     if request.method == 'POST':
         # Retrieve form data
@@ -47,8 +47,6 @@ def update_thresholds():
         # Redirect back to the index page
         return redirect(url_for('routes.index'))
 
-    # If GET, render the thresholds update form
-    return render_template('thresholds.html', thresholds=current_thresholds)
 
 # Get latest warning as JSON
 @bp.route('/get-warning', methods=['GET'])
@@ -59,7 +57,3 @@ def get_warning():
     else:
         return jsonify({"status": "no warnings"})
 
-# Render warning page (HTML)
-@bp.route('/warning', methods=['GET'])
-def warning_page():
-    return render_template('warning.html', warning=latest_warning)
