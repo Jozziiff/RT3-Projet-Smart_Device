@@ -24,7 +24,7 @@ current_thresholds = {
     'soil_moisture_min': 30,
     'soil_moisture_max': 90,
     'temp_low': 15.0,
-    'temp_high': 20,
+    'temp_high': 35,
     'humidity_low': 30.0,
     'humidity_high': 70.0,
     'light_low': 20,

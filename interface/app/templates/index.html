@@ -14,11 +14,13 @@
         <div class="Box2">
             <div class="titre">
                 <h1>Current Plant Status</h1>
+                <p>Last Received at: {{ status["timestamp"] }}
             </div>
             <div class="status">
                 <p>Temperature: {{ status["temperature"] }}°C</p>
                 <p>Humidity: {{ status["humidity"] }}%</p>
                 <p>Soil Moisture: {{ status["soil_moisture"] }}%</p>
+                <p>Light Level: {{ status["light_level"] }}Lux</p>
             </div>
         </div>
         <div class="Box1">
@@ -26,29 +28,49 @@
                 <h1>Update Thresholds</h1>
             </div>
             <form action="/update-thresholds" method="post">
-                <label for="soil_moisture">Soil Moisture: </label>
-                <input type="number" name="soil_moisture" id="soil_moisture"><br>
-
+                <label for="soil_moisture_min">Soil Moisture Min: </label>
+                <input type="number" name="soil_moisture_min" id="soil_moisture_min" 
+                       placeholder="{{ thresholds['soil_moisture_min'] }}" 
+                       value="{{ thresholds['soil_moisture_min'] }}"><br>
+            
+                <label for="soil_moisture_max">Soil Moisture Max: </label>
+                <input type="number" name="soil_moisture_max" id="soil_moisture_max" 
+                       placeholder="{{ thresholds['soil_moisture_max'] }}" 
+                       value="{{ thresholds['soil_moisture_max'] }}"><br>
+            
                 <label for="temp_low">Temperature Low: </label>
-                <input type="number" step="0.1" name="temp_low" id="temp_low"><br>
-
+                <input type="number" step="0.1" name="temp_low" id="temp_low" 
+                       placeholder="{{ thresholds['temp_low'] }}" 
+                       value="{{ thresholds['temp_low'] }}"><br>
+            
                 <label for="temp_high">Temperature High: </label>
-                <input type="number" step="0.1" name="temp_high" id="temp_high"><br>
-
+                <input type="number" step="0.1" name="temp_high" id="temp_high" 
+                       placeholder="{{ thresholds['temp_high'] }}" 
+                       value="{{ thresholds['temp_high'] }}"><br>
+            
                 <label for="humidity_low">Humidity Low: </label>
-                <input type="number" name="humidity_low" id="humidity_low"><br>
-
+                <input type="number" step="0.1" name="humidity_low" id="humidity_low" 
+                       placeholder="{{ thresholds['humidity_low'] }}" 
+                       value="{{ thresholds['humidity_low'] }}"><br>
+            
                 <label for="humidity_high">Humidity High: </label>
-                <input type="number" name="humidity_high" id="humidity_high"><br>
-
+                <input type="number" step="0.1" name="humidity_high" id="humidity_high" 
+                       placeholder="{{ thresholds['humidity_high'] }}" 
+                       value="{{ thresholds['humidity_high'] }}"><br>
+            
                 <label for="light_low">Light Low: </label>
-                <input type="number" name="light_low" id="light_low"><br>
-
+                <input type="number" step="0.1" name="light_low" id="light_low" 
+                       placeholder="{{ thresholds['light_low'] }}" 
+                       value="{{ thresholds['light_low'] }}"><br>
+            
                 <label for="light_high">Light High: </label>
-                <input type="number" name="light_high" id="light_high"><br>
-
+                <input type="number" step="0.1" name="light_high" id="light_high" 
+                       placeholder="{{ thresholds['light_high'] }}" 
+                       value="{{ thresholds['light_high'] }}"><br>
+            
                 <button type="submit">Update Thresholds</button>
             </form>
+            
         </div>
         <div class="Box3">
             <div class="titre">
@@ -59,6 +81,8 @@
                 <p>Humidity: {% if warning["humidity"] %}{{ warning["humidity"] }}{% else %}No warning{% endif %}</p>
                 <p>Light Level: {% if warning["light_level"] %}{{ warning["light_level"] }}{% else %}No warning{% endif %}</p>
                 <p>Temperature: {% if warning["temperature"] %}{{ warning["temperature"] }}{% else %}No warning{% endif %}</p>
+                <p>Moisture: {% if warning["moisture_level"] %}{{ warning["moisture_level"] }}{% else %}No warning{% endif %}</p>
+                <p>Plant Last watered at: {% if warning["last_watering"] %}{{ warning["last_watering"] }}{% else %}No warning{% endif %}</p>
             </div>
         </div>
     </div>

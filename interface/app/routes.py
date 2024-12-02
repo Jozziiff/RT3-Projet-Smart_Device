@@ -23,7 +23,8 @@ def get_thresholds():
 def update_thresholds():
     if request.method == 'POST':
         # Retrieve form data
-        soil_moisture = request.form.get('soil_moisture', type=int)
+        soil_moisture_min = request.form.get('soil_moisture_min', type=int)
+        soil_moisture_max = request.form.get('soil_moisture_max', type=int)
         temp_low = request.form.get('temp_low', type=float)
         temp_high = request.form.get('temp_high', type=float)
         humidity_low = request.form.get('humidity_low', type=float)
@@ -33,7 +34,8 @@ def update_thresholds():
 
         # Update thresholds with form values
         global current_thresholds
-        current_thresholds['soil_moisture'] = soil_moisture
+        current_thresholds['soil_moisture_min'] = soil_moisture_min
+        current_thresholds['soil_moisture_max'] = soil_moisture_max
         current_thresholds['temp_low'] = temp_low
         current_thresholds['temp_high'] = temp_high
         current_thresholds['humidity_low'] = humidity_low
