@@ -17,7 +17,8 @@ WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
 // Threshold Variables
-int soilMoistureThreshold = 30;  // Default minimum soil moisture percentage
+int soilMoistureThresholdMin = 30;  // Default minimum soil moisture percentage
+int soilMoistureThresholdMax = 90;  // Default minimum soil moisture percentage
 float tempLowThreshold = 15.0;   // Default minimum temperature in °C
 float tempHighThreshold = 35.0;  // Default maximum temperature in °C
 float humidityLowThreshold = 30.0;  // Default minimum humidity percentage
@@ -28,7 +29,6 @@ int lightHighThreshold = 80;   // Default maximum light level percentage
 // Timer Variables
 uint32_t lastSensorReadTime = 0;
 const uint32_t sensorReadInterval = 3000;
-
 
 // MQTT Callback function
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
@@ -55,7 +55,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     }
 
     // Extract values from the JSON document, using null if not present
-    soilMoistureThreshold = doc["soil_moisture"] != nullptr ? doc["soil_moisture"].as<int>() : soilMoistureThreshold;
+    soilMoistureThresholdMin = doc["soil_moisture_min"] != nullptr ? doc["soil_moisture_min"].as<int>() : soilMoistureThresholdMin;
+    soilMoistureThresholdMax = doc["soil_moisture_max"] != nullptr ? doc["soil_moisture_max"].as<int>() : soilMoistureThresholdMax;
     tempLowThreshold = doc["temp_low"] != nullptr ? doc["temp_low"].as<float>() : tempLowThreshold;
     tempHighThreshold = doc["temp_high"] != nullptr ? doc["temp_high"].as<float>() : tempHighThreshold;
     humidityLowThreshold = doc["humidity_low"] != nullptr ? doc["humidity_low"].as<float>() : humidityLowThreshold;
@@ -67,7 +68,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
 
 // Function to check environment and send warnings
-void checkEnvironment(float temperature, float humidity, int lightLevel) {
+void checkEnvironment(float temperature, float humidity, int lightLevel, int moisture, String waterTime) {
   String warning = "";  // JSON format for warnings, empty by default
   bool hasWarning = false;
   
@@ -103,21 +104,36 @@ void checkEnvironment(float temperature, float humidity, int lightLevel) {
     hasWarning = true;
   }
 
-  warning = "{\"temperature\": \"" + tempWarn + "\" , \"humidity\": \"" + humidityWarn +  "\", \"lightLevel\": \"" + lightWarn + "\"}";
-  publishData(mqttClient, topicWarnings, warning.c_str());
+  if (moisture < soilMoistureThresholdMin) {
+    soilWarn = "Soil not moisture enough, watering the plant...";
+    hasWarning = true;
+  } else if (moisture > soilMoistureThresholdMax) {
+    soilWarn = "Soil too moist!";
+    hasWarning = true;
+  }
+  if (hasWarning) {
+    warning = "{\"temperature\": \"" + tempWarn + "\" , \"humidity\": \"" + humidityWarn +  "\", \"lightLevel\": \"" + lightWarn + "\", \"moisture\": \"" + soilWarn + "\", \"lastWatered\": \"" + waterTime + "\"}";
+    publishData(mqttClient, topicWarnings, warning.c_str());
+  }
 }
 
 
 void setup() {
     Serial.begin(115200);
     connectToWiFi(WIFI_SSID, WIFI_PASSWORD);
+
+    // Initialize NTP for accurate time
+    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+    Serial.println("Waiting for time synchronization...");
+    delay(2000); // Allow time for synchronization
+
     setupMQTT(mqttClient, MQTT_SERVER, MQTT_PORT, MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD, mqttCallback);
 
     initSensors(dhtSensor, DHT_PIN);
     initServo(myservo, SERVO_PIN);
-    subscribeToTopic(mqttClient, topicThresholds);  // Ensure this subscribes to the topic for threshold updates
-
+    subscribeToTopic(mqttClient, topicThresholds);
 }
+
 
 void loop() {
     if (millis() - lastSensorReadTime > sensorReadInterval) {
@@ -131,18 +147,18 @@ void loop() {
                             String(soilMoisture) + ",\"lightLevel\":" + String(lightLevel) + "}";
         publishData(mqttClient, topicPublish, sensorData.c_str());
 
-        checkEnvironment(temperature, humidity, lightLevel);
-        // Water plant if necessary
-        controlWatering(myservo, soilMoisture, soilMoistureThreshold);
+        // Call controlWatering and check if watering occurred
+        String lastWateredTime = controlWatering(myservo, soilMoisture, soilMoistureThresholdMin);
 
+        // Check environment warnings
+        checkEnvironment(temperature, humidity, lightLevel, soilMoisture, lastWateredTime);
 
         lastSensorReadTime = millis();
     }
 
     maintainConnection(mqttClient, MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD);
 
-    
-
     // Ensure MQTT client processes incoming messages
     mqttClient.loop();  // Important to call this periodically for subscription handling
 }
+
