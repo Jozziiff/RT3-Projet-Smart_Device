@@ -107,23 +107,6 @@ void checkEnvironment(float temperature, float humidity, int lightLevel) {
   publishData(mqttClient, topicWarnings, warning.c_str());
 }
 
-void printThresholds() {
-  Serial.println("Current Thresholds:");
-  Serial.print("Soil Moisture Threshold: ");
-  Serial.println(soilMoistureThreshold);
-  Serial.print("Temperature Low Threshold: ");
-  Serial.println(tempLowThreshold);
-  Serial.print("Temperature High Threshold: ");
-  Serial.println(tempHighThreshold);
-  Serial.print("Humidity Low Threshold: ");
-  Serial.println(humidityLowThreshold);
-  Serial.print("Humidity High Threshold: ");
-  Serial.println(humidityHighThreshold);
-  Serial.print("Light Low Threshold: ");
-  Serial.println(lightLowThreshold);
-  Serial.print("Light High Threshold: ");
-  Serial.println(lightHighThreshold);
-}
 
 void setup() {
     Serial.begin(115200);
@@ -134,8 +117,6 @@ void setup() {
     initServo(myservo, SERVO_PIN);
     subscribeToTopic(mqttClient, topicThresholds);  // Ensure this subscribes to the topic for threshold updates
 
-    // Print the initial threshold values
-    printThresholds();
 }
 
 void loop() {
@@ -154,8 +135,6 @@ void loop() {
         // Water plant if necessary
         controlWatering(myservo, soilMoisture, soilMoistureThreshold);
 
-        // Print the threshold values periodically in the loop
-        printThresholds();
 
         lastSensorReadTime = millis();
     }
