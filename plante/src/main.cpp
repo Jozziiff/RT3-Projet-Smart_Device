@@ -23,8 +23,8 @@ float tempLowThreshold = 15.0;   // Default minimum temperature in °C
 float tempHighThreshold = 35.0;  // Default maximum temperature in °C
 float humidityLowThreshold = 30.0;  // Default minimum humidity percentage
 float humidityHighThreshold = 70.0; // Default maximum humidity percentage
-int lightLowThreshold = 20;    // Default minimum light level percentage
-int lightHighThreshold = 80;   // Default maximum light level percentage
+int lightLowThreshold = 700;    // Default minimum light level percentage
+int lightHighThreshold = 1500;   // Default maximum light level percentage
 
 // Timer Variables
 uint32_t lastSensorReadTime = 0;

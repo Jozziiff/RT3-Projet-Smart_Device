@@ -27,8 +27,8 @@ current_thresholds = {
     'temp_high': 35,
     'humidity_low': 30.0,
     'humidity_high': 70.0,
-    'light_low': 20,
-    'light_high': 80
+    'light_low': 700,
+    'light_high': 1500
 }
 
 # MQTT Broker details

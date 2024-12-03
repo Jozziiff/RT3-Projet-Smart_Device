@@ -12,9 +12,13 @@
     </div>
     <div class="MainBox">
         <div class="Box2">
-            <div class="titre">
-                <h1>Current Plant Status</h1>
-                <p>Last Received at: {{ status["timestamp"] }}
+            <div class="boxbox">
+                <div class="titre">
+                    <h1>Current Plant Status</h1>
+                </div>
+                <div class="titre1">
+                    <h1>Last Received at: {{ status["timestamp"] }}<h1>
+                </div>
             </div>
             <div class="status">
                 <p>Temperature: {{ status["temperature"] }}°C</p>
@@ -76,7 +80,7 @@
             <div class="titre">
                 <h1>Latest Warning</h1>
             </div>
-            <div class="warning-message">
+            <div class="status">
                 <!-- The warning message will appear here -->
                 <p>Humidity: {% if warning["humidity"] %}{{ warning["humidity"] }}{% else %}No warning{% endif %}</p>
                 <p>Light Level: {% if warning["light_level"] %}{{ warning["light_level"] }}{% else %}No warning{% endif %}</p>

@@ -14,9 +14,17 @@ void readSensors(DHTesp& dhtSensor, int soilSensorPin, int ldrSensorPin,
     int soilRaw = analogRead(soilSensorPin);
     soilMoisture = map(soilRaw, 0, 4095, 100, 0);
 
-   float ldrRaw = analogRead(ldrSensorPin);  // Read the raw LDR value
+    const float GAMMA = 0.7;
+    const float RL10 = 50; // Resistance of the LDR at 10 lux in kilo-ohms
 
-    // Map raw ADC values (0-4095) to a float range (0.0 to 100000.0 lux)
-    lightLevel = (ldrRaw / 4095.0) * 100000.0;  // Convert to lux as a float
+    // Convert analog value to voltage (ESP32 ADC range is 0-4095, Vcc is 3.3V)
+    int analogValue = analogRead(ldrSensorPin);
+    float voltage = analogValue / 4095.0 * 3.3;
 
+    // Calculate the resistance of the LDR
+    float resistance = 2000 * voltage / (3.3 - voltage);
+
+    // Calculate and return lux value
+    float lux = pow(RL10 * 1e3 * pow(10, GAMMA) / resistance, (1 / GAMMA)) / 10;
+    lightLevel = lux;
 }
